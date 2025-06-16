@@ -197,13 +197,19 @@
       return total;
     }
 
-    function updateMonthlyTotalDisplay() {
-      const selectedDate = getSelectedDate();
-      const monthKey = getMonthKey(selectedDate);
-      const monthlyTotal = calculateMonthlyTotal(monthKey);
-      const currentMonthName = new Date().toLocaleString('default', { month: 'long' });
-      document.getElementById("monthlyTotal").textContent = `${currentMonthName} Total : ₹${monthlyTotal * 10}`;
-    }
+ function updateMonthlyTotalDisplay() {
+  const selectedDate = getSelectedDate();
+  const monthKey = getMonthKey(selectedDate);
+  const monthlyTotal = calculateMonthlyTotal(monthKey);
+
+  const selectedDateObj = new Date(selectedDate); // FIX: define this
+  const selectedMonthName = selectedDateObj.toLocaleString('default', { month: 'long' });
+  const selectedYear = selectedDateObj.getFullYear();
+
+  document.getElementById("monthlyTotal").textContent = `${selectedMonthName} ${selectedYear} Total : ₹${monthlyTotal * 10}`;
+}
+
+
 
     function updateUI() {
       const log = document.getElementById("log");
