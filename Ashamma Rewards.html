@@ -2,74 +2,147 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ashudhan Rewards Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ashu-Dhannu Rewards</title>
   <style>
     body {
-      font-family: sans-serif;
-      padding: 20px;
-      background-color: #f0f8ff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 10px;
+      background: url('https://raw.githubusercontent.com/sridhanvy152/DhAnshuRewards/refs/heads/main/img2.jpg') no-repeat center center fixed;
+      background-size: cover;
     }
-    h1 {
-      color: #333;
+
+    .container {
+      max-width: 220px;
+      margin: auto;
+      background: white;
+      padding: 5px;
     }
-    .task-group {
-      margin: 10px 0;
+
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 22px;
     }
-    .task-group label {
-      display: block;
-      margin: 5px 0;
+
+    input, select, button {
+      width: 60px;
+      margin: 6px 0px;
+      padding: 10px;
+      font-size: 20px;
     }
-    input[type="number"] {
-      width: 100px;
-    }
-    button {
-      margin: 10px 5px 20px 0;
-      padding: 8px 16px;
-      background-color: #0066cc;
-      color: white;
-      border: none;
-      border-radius: 4px;
-    }
-    button:hover {
-      background-color: #004c99;
-    }
-    #log div {
-      margin: 3px 0;
-    }
-    #overallTotal, #totalPoints {
-      margin: 10px 0;
+
+    .total {
+      font-size: 18px;
       font-weight: bold;
+      margin: 10px 0;
+      color: green;
+      text-align: center;
+    }
+
+    .task-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .task-group label {
+      flex: 1 1 45%;
+      background: #e9f5e9;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .task-group input[type="number"] {
+      flex: 1;
+      margin-top: 6px;
+    }
+
+    .log {
+      margin-top: 20px;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+      font-size: 14px;
+    }
+
+    .log h3 {
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    .clear-btn {
+      background-color: red;
+      color: white;
+      font-size: 14px;
+      width : 65px;
+    }
+
+    .add-btn {
+      background-color: green;
+      color: white;
+      font-size: 14px;
+      width : 65px;
+    }
+
+    .date-btn {
+      width: 160px;
+      font-size: 14px;
+    }
+
+    .summary-btn {
+      background-color: orange;
+      color: black;
+      font-size: 14px;
+      width : 75px;
+    }
+
+    @media (max-width: 360px) {
+      .task-group label {
+        flex: 1 1 100%;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h2>Ashu-Dhannu Rewards</h2>
+      
 
-  <h1>Ashudhan Reward Tracker</h1>
+    <div class="total" id="monthlyTotal">Monthly Total Points: 0 (₹0)</div>
 
-  <label for="dateSelector">Select Date:</label>
-  <input type="date" id="dateSelector" />
+    
 
-  <div class="task-group">
-    <h3>Daily Tasks</h3>
-    <label><input type="checkbox" value="Woke up before 7 AM" /> Woke up before 7 AM</label>
-    <label><input type="checkbox" value="Exercise/Yoga" /> Exercise/Yoga</label>
-    <label><input type="checkbox" value="Healthy Meal" /> Healthy Meal</label>
-    <label><input type="checkbox" value="Study Time" /> Study Time</label>
-    <label><input type="checkbox" value="No Junk Food" /> No Junk Food</label>
+    <input type="date" id="dateSelector" class="date-btn" onchange="updateUI()" />
+
+    <div class="total" id="totalPoints">Today's Points: 0</div>
+
+    <div class="task-group">
+      <label><input type="checkbox" value="Breakfast"> Breakfast</label>
+      <label><input type="checkbox" value="Lunch"> Lunch</label>
+      <label><input type="checkbox" value="Gym"> Gym</label>
+      <label><input type="checkbox" value="Study"> Study</label>
+      <label><input type="checkbox" value="Dinner-Tablets"> Dinner-Tablets</label>
+      <label><input type="checkbox" value="Sleeping"> Sleeping</label>
+      <label style="flex-direction: column; align-items: flex-start;">
+        Sorry:
+        <input type="number" id="negativePoints" placeholder="😔" style="font-size: 20px;" />
+      </label>
+    </div>
+
+    <button onclick="addEntries()" class="add-btn">Add Tasks</button>
+    <button onclick="clearData()" class="clear-btn">Clear Data</button>
+
+    <button onclick="showAllMonthTotals()" class="summary-btn">Monthly Summary</button>
+
+    <div id="log"></div>
+    <div id="monthlySummary" style="font-size: 14px; margin-top: 10px;"></div>
   </div>
-
-  <div>
-    <label for="negativePoints">Negative Points:</label>
-    <input type="number" id="negativePoints" placeholder="e.g., 2" />
-  </div>
-
-  <button onclick="addEntries()">Add Entry</button>
-  <button onclick="clearData()">Clear Today's Data</button>
-
-  <div id="totalPoints"></div>
-  <div id="overallTotal"></div>
-  <div id="log"></div>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -88,12 +161,16 @@
 
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-
     let allEntries = {};
 
     function getSelectedDate() {
       const dateInput = document.getElementById("dateSelector").value;
       return dateInput || new Date().toISOString().slice(0, 10);
+    }
+
+    function getMonthKey(dateStr) {
+      const [year, month] = dateStr.split("-");
+      return `${year}-${month}`;
     }
 
     function saveEntries() {
@@ -108,21 +185,30 @@
       });
     }
 
-    function calculateOverallTotal() {
+    function calculateMonthlyTotal(monthKey) {
       let total = 0;
       for (const date in allEntries) {
-        allEntries[date].forEach(entry => {
-          total += entry.points;
-        });
+        if (getMonthKey(date) === monthKey) {
+          allEntries[date].forEach(entry => {
+            total += entry.points;
+          });
+        }
       }
-      document.getElementById("overallTotal").textContent = `Overall Total Points: ${total}`;
+      return total;
+    }
+
+    function updateMonthlyTotalDisplay() {
+      const selectedDate = getSelectedDate();
+      const monthKey = getMonthKey(selectedDate);
+      const monthlyTotal = calculateMonthlyTotal(monthKey);
+      const currentMonthName = new Date().toLocaleString('default', { month: 'long' });
+      document.getElementById("monthlyTotal").textContent = `${currentMonthName} Total : ₹${monthlyTotal * 10}`;
     }
 
     function updateUI() {
       const log = document.getElementById("log");
       const totalDisplay = document.getElementById("totalPoints");
       const selectedDate = getSelectedDate();
-
       const entries = allEntries[selectedDate] || [];
 
       log.innerHTML = `<h3>Entries for ${selectedDate}</h3>`;
@@ -135,50 +221,64 @@
       });
 
       totalDisplay.textContent = `Today's Points: ${total}`;
-      calculateOverallTotal();
+      updateMonthlyTotalDisplay();
     }
 
     function addEntries() {
-      const checkboxes = document.querySelectorAll('.task-group input[type="checkbox"]');
-      const negativeInput = document.getElementById("negativePoints");
-      const selectedDate = getSelectedDate();
+  const checkboxes = document.querySelectorAll('.task-group input[type="checkbox"]');
+  const negativeInput = document.getElementById("negativePoints");
+  const selectedDate = getSelectedDate();
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
 
-      const todayStr = new Date().toISOString().slice(0, 10);
-      if (selectedDate > todayStr) {
-        alert("Ashamma, you can't enter data for tomorrow or future dates!");
-        return;
-      }
+  // Validation: No future dates
+  if (selectedDate > todayStr) {
+    alert("Ashamma, you can't enter data for tomorrow or future dates!");
+    return;
+  }
 
-      if (!allEntries[selectedDate]) {
-        allEntries[selectedDate] = [];
-      }
+  // 🚫 Validation: Prevent adding for previous months
+  const selectedMonth = new Date(selectedDate).getMonth();
+  const selectedYear = new Date(selectedDate).getFullYear();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
 
-      let anySelected = false;
+  if (selectedYear < currentYear || (selectedYear === currentYear && selectedMonth < currentMonth)) {
+    alert("Ashamma, you can't add points for previous months 😁!");
+    return;
+  }
 
-      checkboxes.forEach(checkbox => {
-        if (checkbox.checked) {
-          const task = checkbox.value;
-          allEntries[selectedDate].push({ task, points: 1 });
-          checkbox.checked = false;
-          anySelected = true;
-        }
-      });
+  if (!allEntries[selectedDate]) {
+    allEntries[selectedDate] = [];
+  }
 
-      const negativeValue = parseInt(negativeInput.value);
-      if (!isNaN(negativeValue) && negativeValue !== 0) {
-        allEntries[selectedDate].push({ task: "Negatives", points: -Math.abs(negativeValue) });
-        negativeInput.value = "";
-        anySelected = true;
-      }
+  let anySelected = false;
 
-      if (!anySelected) {
-        alert("Please select at least one task or enter negative points.");
-        return;
-      }
-
-      saveEntries();
-      updateUI();
+  checkboxes.forEach(checkbox => {
+    if (checkbox.checked) {
+      const task = checkbox.value;
+      allEntries[selectedDate].push({ task, points: 1 });
+      checkbox.checked = false;
+      anySelected = true;
     }
+  });
+
+  const negativeValue = parseInt(negativeInput.value);
+  if (!isNaN(negativeValue) && negativeValue !== 0) {
+    allEntries[selectedDate].push({ task: "Negatives", points: -Math.abs(negativeValue) });
+    negativeInput.value = "";
+    anySelected = true;
+  }
+
+  if (!anySelected) {
+    alert("Please select at least one task or enter negative points.");
+    return;
+  }
+
+  saveEntries();
+  updateUI();
+}
+
 
     function clearData() {
       const selectedDate = getSelectedDate();
@@ -194,14 +294,34 @@
       }
     }
 
+    function showAllMonthTotals() {
+      const summaryDiv = document.getElementById("monthlySummary");
+      const monthMap = {};
+
+      for (const date in allEntries) {
+        const monthKey = getMonthKey(date);
+        if (!monthMap[monthKey]) {
+          monthMap[monthKey] = 0;
+        }
+        allEntries[date].forEach(entry => {
+          monthMap[monthKey] += entry.points;
+        });
+      }
+
+      summaryDiv.innerHTML = "<strong>Monthly Summary:</strong><br/>";
+      const sortedMonths = Object.keys(monthMap).sort();
+      sortedMonths.forEach(month => {
+        const points = monthMap[month];
+        summaryDiv.innerHTML += `${month}: ${points} points → ₹${points * 10}<br/>`;
+      });
+    }
+
     window.onload = () => {
       const today = new Date();
       const todayStr = today.toISOString().slice(0, 10);
-
       const dateInput = document.getElementById("dateSelector");
       dateInput.value = todayStr;
       dateInput.max = todayStr;
-
       fetchData();
     };
   </script>
