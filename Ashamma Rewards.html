@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ashudhan Rewards Tracker</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background-color: #f0f8ff;
+    }
+    h1 {
+      color: #333;
+    }
+    .task-group {
+      margin: 10px 0;
+    }
+    .task-group label {
+      display: block;
+      margin: 5px 0;
+    }
+    input[type="number"] {
+      width: 100px;
+    }
+    button {
+      margin: 10px 5px 20px 0;
+      padding: 8px 16px;
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #004c99;
+    }
+    #log div {
+      margin: 3px 0;
+    }
+    #overallTotal, #totalPoints {
+      margin: 10px 0;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Ashudhan Reward Tracker</h1>
+
+  <label for="dateSelector">Select Date:</label>
+  <input type="date" id="dateSelector" />
+
+  <div class="task-group">
+    <h3>Daily Tasks</h3>
+    <label><input type="checkbox" value="Woke up before 7 AM" /> Woke up before 7 AM</label>
+    <label><input type="checkbox" value="Exercise/Yoga" /> Exercise/Yoga</label>
+    <label><input type="checkbox" value="Healthy Meal" /> Healthy Meal</label>
+    <label><input type="checkbox" value="Study Time" /> Study Time</label>
+    <label><input type="checkbox" value="No Junk Food" /> No Junk Food</label>
+  </div>
+
+  <div>
+    <label for="negativePoints">Negative Points:</label>
+    <input type="number" id="negativePoints" placeholder="e.g., 2" />
+  </div>
+
+  <button onclick="addEntries()">Add Entry</button>
+  <button onclick="clearData()">Clear Today's Data</button>
+
+  <div id="totalPoints"></div>
+  <div id="overallTotal"></div>
+  <div id="log"></div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCo5O1GvwAP65mnQmbAMPW9vOnf9wk4XMU",
+      authDomain: "ashudhannurewards.firebaseapp.com",
+      databaseURL: "https://ashudhannurewards-default-rtdb.firebaseio.com",
+      projectId: "ashudhannurewards",
+      storageBucket: "ashudhannurewards.appspot.com",
+      messagingSenderId: "442134959131",
+      appId: "1:442134959131:web:e41c6f66dd1a52ea7b14be",
+      measurementId: "G-Z23YXM4MBC"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    let allEntries = {};
+
+    function getSelectedDate() {
+      const dateInput = document.getElementById("dateSelector").value;
+      return dateInput || new Date().toISOString().slice(0, 10);
+    }
+
+    function saveEntries() {
+      const selectedDate = getSelectedDate();
+      database.ref("entries/" + selectedDate).set(allEntries[selectedDate]);
+    }
+
+    function fetchData() {
+      database.ref("entries").on("value", (snapshot) => {
+        allEntries = snapshot.val() || {};
+        updateUI();
+      });
+    }
+
+    function calculateOverallTotal() {
+      let total = 0;
+      for (const date in allEntries) {
+        allEntries[date].forEach(entry => {
+          total += entry.points;
+        });
+      }
+      document.getElementById("overallTotal").textContent = `Overall Total Points: ${total}`;
+    }
+
+    function updateUI() {
+      const log = document.getElementById("log");
+      const totalDisplay = document.getElementById("totalPoints");
+      const selectedDate = getSelectedDate();
+
+      const entries = allEntries[selectedDate] || [];
+
+      log.innerHTML = `<h3>Entries for ${selectedDate}</h3>`;
+      let total = 0;
+      entries.forEach(entry => {
+        const div = document.createElement("div");
+        div.textContent = `${entry.task} → ${entry.points > 0 ? "+" : ""}${entry.points}`;
+        log.appendChild(div);
+        total += entry.points;
+      });
+
+      totalDisplay.textContent = `Today's Points: ${total}`;
+      calculateOverallTotal();
+    }
+
+    function addEntries() {
+      const checkboxes = document.querySelectorAll('.task-group input[type="checkbox"]');
+      const negativeInput = document.getElementById("negativePoints");
+      const selectedDate = getSelectedDate();
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      if (selectedDate > todayStr) {
+        alert("Ashamma, you can't enter data for tomorrow or future dates!");
+        return;
+      }
+
+      if (!allEntries[selectedDate]) {
+        allEntries[selectedDate] = [];
+      }
+
+      let anySelected = false;
+
+      checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          const task = checkbox.value;
+          allEntries[selectedDate].push({ task, points: 1 });
+          checkbox.checked = false;
+          anySelected = true;
+        }
+      });
+
+      const negativeValue = parseInt(negativeInput.value);
+      if (!isNaN(negativeValue) && negativeValue !== 0) {
+        allEntries[selectedDate].push({ task: "Negatives", points: -Math.abs(negativeValue) });
+        negativeInput.value = "";
+        anySelected = true;
+      }
+
+      if (!anySelected) {
+        alert("Please select at least one task or enter negative points.");
+        return;
+      }
+
+      saveEntries();
+      updateUI();
+    }
+
+    function clearData() {
+      const selectedDate = getSelectedDate();
+      if (allEntries[selectedDate]) {
+        if (confirm(`Ashamma, are you sure you want to delete data for ${selectedDate}?`)) {
+          delete allEntries[selectedDate];
+          database.ref("entries/" + selectedDate).remove();
+          updateUI();
+          alert(`Data for ${selectedDate} has been cleared Ashamma`);
+        }
+      } else {
+        alert(`No data found for the ${selectedDate} Ashamma.`);
+      }
+    }
+
+    window.onload = () => {
+      const today = new Date();
+      const todayStr = today.toISOString().slice(0, 10);
+
+      const dateInput = document.getElementById("dateSelector");
+      dateInput.value = todayStr;
+      dateInput.max = todayStr;
+
+      fetchData();
+    };
+  </script>
+</body>
+</html>
