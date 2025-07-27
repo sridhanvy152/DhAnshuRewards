@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ashu-Dhannu Rewards </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ashu-Dhannu Rewards</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -80,14 +80,14 @@
       background-color: red;
       color: white;
       font-size: 14px;
-      width : 65px;
+      width: 65px;
     }
 
     .add-btn {
       background-color: green;
       color: white;
       font-size: 14px;
-      width : 65px;
+      width: 65px;
     }
 
     .date-btn {
@@ -99,7 +99,7 @@
       background-color: orange;
       color: black;
       font-size: 14px;
-      width : 75px;
+      width: 75px;
     }
 
     @media (max-width: 360px) {
@@ -112,14 +112,10 @@
 <body>
   <div class="container">
     <h2>Ashu-Dhannu Rewards</h2>
-      
 
     <div class="total" id="monthlyTotal">Monthly Total Points: 0 (₹0)</div>
 
-    
-
     <input type="date" id="dateSelector" class="date-btn" onchange="updateUI()" />
-
     <div class="total" id="totalPoints">Today's Points: 0</div>
 
     <div class="task-group">
@@ -137,14 +133,14 @@
 
     <button onclick="addEntries()" class="add-btn">Add Tasks</button>
     <button onclick="clearData()" class="clear-btn">Clear Data</button>
-
     <button onclick="showAllMonthTotals()" class="summary-btn">Monthly Summary</button>
+    <button onclick="testFetch()" class="summary-btn">Test Fetch</button>
 
-    <div id="log"></div>
+    <div id="log" class="log"></div>
     <div id="monthlySummary" style="font-size: 14px; margin-top: 10px;"></div>
   </div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
@@ -179,10 +175,53 @@
     }
 
     function fetchData() {
-      database.ref("entries").on("value", (snapshot) => {
-        allEntries = snapshot.val() || {};
-        updateUI();
+      try {
+        database.ref("entries").on("value", (snapshot) => {
+          allEntries = snapshot.val() || {};
+          console.log("Fetched Data:", allEntries); // 🔍 Debug
+          updateUI();
+        }, (error) => {
+          console.error("Firebase read error:", error);
+          alert("Unable to read data from Firebase. See console.");
+        });
+      } catch (err) {
+        console.error("FetchData Exception:", err);
+      }
+    }
+
+    function updateUI() {
+      const log = document.getElementById("log");
+      const totalDisplay = document.getElementById("totalPoints");
+      const selectedDate = getSelectedDate();
+      const entries = allEntries[selectedDate] || [];
+
+      console.log("Updating UI for:", selectedDate);
+      console.log("Entries:", entries);
+
+      log.innerHTML = `<h3>Entries for ${selectedDate}</h3>`;
+      let total = 0;
+
+      entries.forEach(entry => {
+        const div = document.createElement("div");
+        div.textContent = `${entry.task} → ${entry.points > 0 ? "+" : ""}${entry.points}`;
+        log.appendChild(div);
+        total += entry.points;
       });
+
+      totalDisplay.textContent = `Today's Points: ${total}`;
+      updateMonthlyTotalDisplay();
+    }
+
+    function updateMonthlyTotalDisplay() {
+      const selectedDate = getSelectedDate();
+      const monthKey = getMonthKey(selectedDate);
+      const monthlyTotal = calculateMonthlyTotal(monthKey);
+
+      const selectedDateObj = new Date(selectedDate);
+      const selectedMonthName = selectedDateObj.toLocaleString('default', { month: 'long' });
+      const selectedYear = selectedDateObj.getFullYear();
+
+      document.getElementById("monthlyTotal").textContent = `${selectedMonthName} ${selectedYear} Total : ₹${monthlyTotal * 10}`;
     }
 
     function calculateMonthlyTotal(monthKey) {
@@ -197,94 +236,58 @@
       return total;
     }
 
- function updateMonthlyTotalDisplay() {
-  const selectedDate = getSelectedDate();
-  const monthKey = getMonthKey(selectedDate);
-  const monthlyTotal = calculateMonthlyTotal(monthKey);
-
-  const selectedDateObj = new Date(selectedDate); // FIX: define this
-  const selectedMonthName = selectedDateObj.toLocaleString('default', { month: 'long' });
-  const selectedYear = selectedDateObj.getFullYear();
-
-  document.getElementById("monthlyTotal").textContent = `${selectedMonthName} ${selectedYear} Total : ₹${monthlyTotal * 10}`;
-}
-
-
-
-    function updateUI() {
-      const log = document.getElementById("log");
-      const totalDisplay = document.getElementById("totalPoints");
+    function addEntries() {
+      const checkboxes = document.querySelectorAll('.task-group input[type="checkbox"]');
+      const negativeInput = document.getElementById("negativePoints");
       const selectedDate = getSelectedDate();
-      const entries = allEntries[selectedDate] || [];
+      const today = new Date();
+      const todayStr = today.toISOString().slice(0, 10);
 
-      log.innerHTML = `<h3>Entries for ${selectedDate}</h3>`;
-      let total = 0;
-      entries.forEach(entry => {
-        const div = document.createElement("div");
-        div.textContent = `${entry.task} → ${entry.points > 0 ? "+" : ""}${entry.points}`;
-        log.appendChild(div);
-        total += entry.points;
+      if (selectedDate > todayStr) {
+        alert("Ashamma, you can't enter data for future dates!");
+        return;
+      }
+
+      const selectedMonth = new Date(selectedDate).getMonth();
+      const selectedYear = new Date(selectedDate).getFullYear();
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+
+      if (selectedYear < currentYear || (selectedYear === currentYear && selectedMonth < currentMonth)) {
+        alert("Ashamma, you can't add points for previous months 😁!");
+        return;
+      }
+
+      if (!allEntries[selectedDate]) {
+        allEntries[selectedDate] = [];
+      }
+
+      let anySelected = false;
+
+      checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          const task = checkbox.value;
+          allEntries[selectedDate].push({ task, points: 1 });
+          checkbox.checked = false;
+          anySelected = true;
+        }
       });
 
-      totalDisplay.textContent = `Today's Points: ${total}`;
-      updateMonthlyTotalDisplay();
+      const negativeValue = parseInt(negativeInput.value);
+      if (!isNaN(negativeValue) && negativeValue !== 0) {
+        allEntries[selectedDate].push({ task: "Negatives", points: -Math.abs(negativeValue) });
+        negativeInput.value = "";
+        anySelected = true;
+      }
+
+      if (!anySelected) {
+        alert("Please select at least one task or enter negative points.");
+        return;
+      }
+
+      saveEntries();
+      updateUI();
     }
-
-    function addEntries() {
-  const checkboxes = document.querySelectorAll('.task-group input[type="checkbox"]');
-  const negativeInput = document.getElementById("negativePoints");
-  const selectedDate = getSelectedDate();
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
-
-  // Validation: No future dates
-  if (selectedDate > todayStr) {
-    alert("Ashamma, you can't enter data for tomorrow or future dates!");
-    return;
-  }
-
-  // 🚫 Validation: Prevent adding for previous months
-  const selectedMonth = new Date(selectedDate).getMonth();
-  const selectedYear = new Date(selectedDate).getFullYear();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-
-  if (selectedYear < currentYear || (selectedYear === currentYear && selectedMonth < currentMonth)) {
-    alert("Ashamma, you can't add points for previous months 😁!");
-    return;
-  }
-
-  if (!allEntries[selectedDate]) {
-    allEntries[selectedDate] = [];
-  }
-
-  let anySelected = false;
-
-  checkboxes.forEach(checkbox => {
-    if (checkbox.checked) {
-      const task = checkbox.value;
-      allEntries[selectedDate].push({ task, points: 1 });
-      checkbox.checked = false;
-      anySelected = true;
-    }
-  });
-
-  const negativeValue = parseInt(negativeInput.value);
-  if (!isNaN(negativeValue) && negativeValue !== 0) {
-    allEntries[selectedDate].push({ task: "Negatives", points: -Math.abs(negativeValue) });
-    negativeInput.value = "";
-    anySelected = true;
-  }
-
-  if (!anySelected) {
-    alert("Please select at least one task or enter negative points.");
-    return;
-  }
-
-  saveEntries();
-  updateUI();
-}
-
 
     function clearData() {
       const selectedDate = getSelectedDate();
@@ -319,6 +322,16 @@
       sortedMonths.forEach(month => {
         const points = monthMap[month];
         summaryDiv.innerHTML += `${month}: ${points} points → ₹${points * 10}<br/>`;
+      });
+    }
+
+    function testFetch() {
+      database.ref("entries").once("value").then(snapshot => {
+        const data = snapshot.val();
+        console.log("Manual Fetch Result:", data);
+        alert("Check console for manual fetch result.");
+      }).catch(error => {
+        console.error("Test Fetch Error:", error);
       });
     }
 
