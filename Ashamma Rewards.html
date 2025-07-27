@@ -134,7 +134,6 @@
     <button onclick="addEntries()" class="add-btn">Add Tasks</button>
     <button onclick="clearData()" class="clear-btn">Clear Data</button>
     <button onclick="showAllMonthTotals()" class="summary-btn">Monthly Summary</button>
-    <button onclick="testFetch()" class="summary-btn">Test Fetch</button>
 
     <div id="log" class="log"></div>
     <div id="monthlySummary" style="font-size: 14px; margin-top: 10px;"></div>
@@ -178,7 +177,7 @@
       try {
         database.ref("entries").on("value", (snapshot) => {
           allEntries = snapshot.val() || {};
-          console.log("Fetched Data:", allEntries); // 🔍 Debug
+          console.log("Fetched Data:", allEntries);
           updateUI();
         }, (error) => {
           console.error("Firebase read error:", error);
@@ -322,16 +321,6 @@
       sortedMonths.forEach(month => {
         const points = monthMap[month];
         summaryDiv.innerHTML += `${month}: ${points} points → ₹${points * 10}<br/>`;
-      });
-    }
-
-    function testFetch() {
-      database.ref("entries").once("value").then(snapshot => {
-        const data = snapshot.val();
-        console.log("Manual Fetch Result:", data);
-        alert("Check console for manual fetch result.");
-      }).catch(error => {
-        console.error("Test Fetch Error:", error);
       });
     }
 
